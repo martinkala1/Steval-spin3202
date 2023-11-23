@@ -1,0 +1,3 @@
+cargo:rustc-link-search=/home/kalamar1/Documents/repos/Rust/steval-spin3202/target/thumbv6m-none-eabi/debug/build/stm32f0-947921e687576967/out
+cargo:rerun-if-changed=src/stm32f0x1/device.x
+cargo:rerun-if-changed=build.rs
