@@ -1,0 +1,4 @@
+cargo:rustc-link-search=/home/kalamar1/Documents/repos/Rust/Steval-spin3202/target/debug/build/steval-spin3202-483aa983ece87b74/out
+cargo:rerun-if-changed=memory.x
+cargo:rustc-link-arg=--nmagic
+cargo:rustc-link-arg=-Tlink.x

@@ -1,4 +1,5 @@
-
+mod timers;
+pub use timers::configure_tim1;
 
 mod gpio;
 pub use gpio::configure_gpiof;
