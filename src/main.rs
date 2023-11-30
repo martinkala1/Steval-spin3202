@@ -4,13 +4,17 @@
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 use panic_halt as _;
-use setup::configure_tim1;
 use stm32f0::stm32f0x1;
 
-use crate::setup::{configure_gpiof, configure_sysclk_pll};
+// use crate::setup::{configure_gpiof, configure_sysclk_pll};
+use system_clocks::configure_sysclk_pll;
+use gpio::configure_gpiof;
+use timers::configure_tim1;
 
 mod error_type;
-mod setup;
+mod gpio;
+mod system_clocks;
+mod timers;
 
 #[entry]
 fn main() -> ! {

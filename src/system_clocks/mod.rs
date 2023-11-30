@@ -1,14 +1,8 @@
-mod timers;
-pub use timers::configure_tim1;
-
-mod gpio;
-pub use gpio::configure_gpiof;
-
 mod clocks;
 pub use clocks::delay_ms;
 use clocks::__configure_sysclk_pll;
-use stm32f0::stm32f0x1::Peripherals;
 
+use stm32f0::stm32f0x1::Peripherals;
 use crate::error_type::{ConfigurationErrorType, LogError};
 
 pub fn configure_sysclk_pll(p: &Peripherals) {
@@ -24,5 +18,3 @@ pub fn configure_sysclk_pll(p: &Peripherals) {
         }
     });
 }
-
-pub const CONFIGURATION_SUCCESS: i32 = 0;
