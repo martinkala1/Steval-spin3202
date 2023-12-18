@@ -13,6 +13,8 @@ pub fn delay_ms(value: u32) {
     delay(value * (unsafe { CPU_FREQ / COMPENSATION } / 1000));
 }
 
+///
+/// Set sysclk to PLL, resulting frequency set at 48MHz
 pub fn __configure_sysclk_pll(p: &Peripherals) -> Result<(), ConfigurationErrorType> {
     let rcc = &p.RCC;
     let mut cnt = 0;
@@ -36,7 +38,6 @@ pub fn __configure_sysclk_pll(p: &Peripherals) -> Result<(), ConfigurationErrorT
     }
     cnt = 0;
     rcc.cfgr.write(|w| w.pllmul().bits(0b0010).pllsrc().hsi_div2()); // set pllmul to 4x
-    rcc.apb2enr.write(|w| w.tim1en().set_bit()); // enable clock for TIM1
     rcc.cr.write(|w| w.pllon().set_bit());
     while rcc.cr.read().pllrdy().is_not_ready() {
         cnt += 1;
