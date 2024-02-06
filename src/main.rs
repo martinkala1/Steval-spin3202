@@ -27,33 +27,39 @@ fn main() -> ! {
 
     hprintln!("Kámo, je to tam!").unwrap();
 
-    pwm.pwm_start(PwmChannel::Channel1);
-    peripherals.GPIOB.odr.write(|w| w.odr15().set_bit());
+    // pwm.pwm_start(PwmChannel::Channel1);
+    // peripherals.GPIOB.odr.write(|w| w.odr15().set_bit());
 
+    // delay_ms(200);
+    // pwm.pwm_stop(PwmChannel::Channel1);
+    let delay = 10;
     loop {
 
         pwm.pwm_stop(PwmChannel::Channel1);
         pwm.pwm_start(PwmChannel::Channel2);
-        delay_ms(1000);
-        peripherals.GPIOB.odr.write(|w| w.odr15().clear_bit().odr13().set_bit()) ;
+        delay_ms(delay);
 
-        delay_ms(1000);
+        peripherals.GPIOB.odr.write(|w| w.odr15().clear_bit().odr13().set_bit()) ;
+        delay_ms(delay);
+
         pwm.pwm_stop(PwmChannel::Channel2);
         pwm.pwm_start(PwmChannel::Channel3);
+        delay_ms(delay);
 
-        delay_ms(1000);
         peripherals.GPIOB.odr.write(|w| w.odr13().clear_bit().odr14().set_bit()) ;
+        delay_ms(delay);
 
-        delay_ms(1000);
         pwm.pwm_stop(PwmChannel::Channel3);
         pwm.pwm_start(PwmChannel::Channel1);
-        delay_ms(1000);
+        delay_ms(delay);
 
         peripherals.GPIOB.odr.write(|w| w.odr14().clear_bit().odr15().set_bit()) ;
-        delay_ms(1000);
+        delay_ms(delay);
 
-        if peripherals.GPIOF.idr.read().idr1().bit_is_set() {
-            peripherals.GPIOF.odr.modify(|r, w| w.odr0().bit(!r.odr0().bit()));
-        }
+        // if peripherals.GPIOF.idr.read().idr1().bit_is_set() {
+        //     peripherals.GPIOF.odr.modify(|r, w| w.odr0().bit(!r.odr0().bit()));
+        // }
+
+        peripherals.GPIOF.odr.modify(|r, w| w.odr0().bit(!r.odr0().bit()));
     }
 }
