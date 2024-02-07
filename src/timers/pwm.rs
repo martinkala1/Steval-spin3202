@@ -21,25 +21,16 @@ impl Pwm<'_> {
         };
     }
 
-    pub fn set_duty_cycle(&mut self, mut dc: f32, channel: PwmChannel) {
-        if dc < 0.0 {
-            dc = 0.0;
+    pub fn set_ccr(&mut self, mut ccr_val: u32) {
+        let arr_val = self.tim.arr.read().bits() as u32;
+        if (ccr_val > arr_val) {
+            ccr_val = arr_val;
         }
-        if dc > 1.0 {
-            dc = 1.0;
+        unsafe {
+            self.tim.ccr1().write(|w| w.bits(ccr_val));
+            self.tim.ccr2().write(|w| w.bits(ccr_val));
+            self.tim.ccr3().write(|w| w.bits(ccr_val));
         }
-        let val = (dc*self.tim.arr.read().bits() as f32) as u32;
-        match channel {
-            PwmChannel::Channel1 => {
-                unsafe {self.tim.ccr1().write(|w| w.bits(val));}
-            },
-            PwmChannel::Channel2 => {
-                unsafe {self.tim.ccr2().write(|w| w.bits(val));}
-            },
-            PwmChannel::Channel3 => {
-                unsafe {self.tim.ccr3().write(|w| w.bits(val));}
-            },
-        };
     }
 
     pub fn is_enabled(&self, channel: PwmChannel) -> bool {

@@ -2,11 +2,11 @@ use stm32f0::stm32f0x1::Peripherals;
 
 /// Configure TIM1 for PWM generation
 /// 
-/// Center-aligned mode, 20 KHz frequency (adjusted for center-aligned mode)
+/// 20 KHz frequency
 /// 
-/// Default DC at 50%
+/// Default DC at 6.25%
 /// 
-/// ARR = 400
+/// ARR = 800
 pub fn configure_tim1(p: &Peripherals) {
     let tim = &p.TIM1;
     let gpioa = &p.GPIOA;
