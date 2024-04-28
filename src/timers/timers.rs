@@ -1,19 +1,13 @@
 use stm32f0::stm32f0x1::Peripherals;
 
 /// Configure TIM1 for PWM generation
-/// 
-/// 20 KHz frequency
-/// 
-/// Default DC at 6.25%
-/// 
-/// ARR = 800
 pub fn configure_tim1(p: &Peripherals) {
     let tim = &p.TIM1;
     let gpioa = &p.GPIOA;
     let rcc = &p.RCC;
 
     rcc.apb2enr.write(|w| w.tim1en().set_bit()); // enable clock for TIM1
-    rcc.ahbenr.write(|w|w.iopaen().set_bit());
+    rcc.ahbenr.write(|w|w.iopaen().set_bit()); // enable clock for GPIOA
 
 
     gpioa.moder.write(|w| w.moder8().alternate().moder9().alternate().moder10().alternate());
@@ -35,4 +29,21 @@ pub fn configure_tim1(p: &Peripherals) {
     tim.cr1.write(|w| w.arpe().set_bit()); // Enable auto-reload preload registers
     tim.egr.write(|w| w.ug().set_bit()); // Enable event generation
     tim.cr1.write(|w| w.cen().set_bit()); // enable timer
+}
+
+pub fn configure_tim2(p: &Peripherals) {
+    let tim = &p.TIM2;
+    let rcc = &p.RCC;
+
+    rcc.apb1enr.write(|w| w.tim2en().set_bit()); // enable clock for TIM2
+
+    tim.egr.write(|w| w.ug().set_bit());
+    unsafe {
+        tim.psc.write(|w| w.bits(999));
+    }
+    tim.arr.write(|w| w.bits(8_000)); // overflow every 0.5 seconds
+
+    tim.dier.modify(|_,w| w.uie().set_bit());
+    tim.cr1.write(|w| w.cen().set_bit()); // enable timer
+    tim.sr.write(|w| w.uif().clear_bit());
 }

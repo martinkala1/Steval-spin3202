@@ -15,18 +15,18 @@ impl LogError for GenericError {
     }
 }
 
-pub enum ConfigurationErrorType {
+pub enum ConfigErrType {
         HsiEnableTimeout,
         PllReadyTimeout,
         PllEnableTimeout,
 }
 
-impl LogError for ConfigurationErrorType {
+impl LogError for ConfigErrType {
     fn log_error(&self) {
         match self {
-            ConfigurationErrorType::HsiEnableTimeout => hprintln!("Enabling HSI timed out, exiting application.").unwrap(),
-            ConfigurationErrorType::PllReadyTimeout => hprintln!("PLL timed out, falling back to 8 MHz SysClk frequency.").unwrap(),
-            ConfigurationErrorType::PllEnableTimeout => hprintln!("PLL enabling timed out, falling back to 8 MHz SysClk frequency.").unwrap(),
+            ConfigErrType::HsiEnableTimeout => hprintln!("Enabling HSI timed out, exiting application.").unwrap(),
+            ConfigErrType::PllReadyTimeout => hprintln!("PLL timed out, falling back to 8 MHz SysClk frequency.").unwrap(),
+            ConfigErrType::PllEnableTimeout => hprintln!("PLL enabling timed out, falling back to 8 MHz SysClk frequency.").unwrap(),
         }
     }
 }

@@ -1,6 +1,0 @@
-cargo:rustc-link-lib=static=cortex-m-rt
-cargo:rustc-cfg=cortex_m
-cargo:rustc-cfg=armv6m
-cargo:rustc-link-search=/home/kalamar1/Documents/repos/Rust/steval-spin3202/target/thumbv6m-none-eabi/debug/build/cortex-m-rt-2faf86c66f2cb9c7/out
-cargo:rerun-if-changed=build.rs
-cargo:rerun-if-changed=link.x.in

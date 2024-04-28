@@ -23,7 +23,7 @@ impl Pwm<'_> {
 
     pub fn set_ccr(&mut self, mut ccr_val: u32) {
         let arr_val = self.tim.arr.read().bits() as u32;
-        if (ccr_val > arr_val) {
+        if ccr_val > arr_val {
             ccr_val = arr_val;
         }
         unsafe {
