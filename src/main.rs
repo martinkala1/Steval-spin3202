@@ -1,9 +1,9 @@
 #![no_std]
 #![no_main]
 
-use core::{cell::RefCell, ops::Deref, panic::PanicInfo};
+use core::{cell::RefCell, panic::PanicInfo};
 
-use cortex_m::{interrupt::{free, Mutex}, Peripherals};
+use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
 use cortex_m_semihosting::hprintln;
 // use panic_halt as _;

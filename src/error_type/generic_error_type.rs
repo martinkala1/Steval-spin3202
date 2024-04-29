@@ -5,7 +5,6 @@ pub trait LogError {
     fn log_error(&self);
 }
 
-// Has to be implemented as enum, semihosting console can only log literals
 pub enum GenericError {
 }
 

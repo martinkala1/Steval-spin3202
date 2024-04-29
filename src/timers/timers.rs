@@ -41,7 +41,7 @@ pub fn configure_tim2(p: &Peripherals) {
     unsafe {
         tim.psc.write(|w| w.bits(999));
     }
-    tim.arr.write(|w| w.bits(8_000)); // overflow every 0.5 seconds
+    tim.arr.write(|w| w.bits(16_000)); // overflow every 0.5 seconds
 
     tim.dier.modify(|_,w| w.uie().set_bit());
     tim.cr1.write(|w| w.cen().set_bit()); // enable timer
