@@ -6,7 +6,7 @@ use crate::six_step::step_sequence::STEP_COUNT;
 use super::step_sequence::{Step, STEP_SEQUENCE};
 
 pub struct Motor<'a> {
-    pub ccr: u32,
+    pub ccr: u16,
     pub running: i8,
     pwm: &'a mut Pwm<'a>,
     actual_step_index: usize,

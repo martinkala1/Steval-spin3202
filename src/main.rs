@@ -24,12 +24,6 @@ mod six_step;
 static GGPIOF: Mutex<RefCell<Option<GPIOF>>> = Mutex::new(RefCell::new(None));
 static GTIM2: Mutex<RefCell<Option<TIM2>>> = Mutex::new(RefCell::new(None));
 
-// #[panic_handler]
-// unsafe fn panic_handler(info: &PanicInfo) -> ! {
-//     hprintln!("ERROR! {:?}", info).unwrap();
-//     loop {}
-// }
-
 #[entry]
 fn main() -> ! {
     let peripherals = stm32f0x1::Peripherals::take().unwrap();
