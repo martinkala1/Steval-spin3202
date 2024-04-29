@@ -1,5 +1,4 @@
-use stm32f0::stm32f0x1::TIM1;
-
+use stm32f0::stm32f0x1::{GPIOB, TIM1};
 
 pub enum PwmChannel {
     Channel1,
@@ -9,6 +8,7 @@ pub enum PwmChannel {
 
 pub struct Pwm<'a> {
     pub tim: &'a TIM1,
+    pub gpio: &'a GPIOB,
 }
 
 impl Pwm<'_> {
@@ -33,12 +33,14 @@ impl Pwm<'_> {
         }
     }
 
-    pub fn is_enabled(&self, channel: PwmChannel) -> bool {
-        match channel {
-            PwmChannel::Channel1 => return self.tim.ccer.read().cc1e().bit_is_set(),
-            PwmChannel::Channel2 => return self.tim.ccer.read().cc2e().bit_is_set(),
-            PwmChannel::Channel3 => return self.tim.ccer.read().cc3e().bit_is_set(),
-        };
+    pub fn stop(&self) {
+        self.tim.cr1.modify(|_,w| w.cen().clear_bit());
+        self.tim.ccer.modify(|_, w| w.cc1e().clear_bit());
+        self.tim.ccer.modify(|_, w| w.cc2e().clear_bit());
+        self.tim.ccer.modify(|_, w| w.cc3e().clear_bit());
+        self.gpio.odr.modify(|_, w| w.odr13().clear_bit());
+        self.gpio.odr.modify(|_, w| w.odr14().clear_bit());
+        self.gpio.odr.modify(|_, w| w.odr15().clear_bit());
     }
 
     pub fn pwm_start(&self, channel: PwmChannel) {
@@ -60,4 +62,33 @@ impl Pwm<'_> {
         };
         self.tim.cr1.modify(|_,w| w.cen().set_bit());
     }
+    
+    pub fn channel_up(&self, channel_engage: &PwmChannel, channel_disengage: &PwmChannel) {
+        self.tim.cr1.modify(|_,w| w.cen().clear_bit());
+        match channel_disengage {
+            PwmChannel::Channel1 => self.tim.ccer.write(|w| w.cc1e().clear_bit()),
+            PwmChannel::Channel2 => self.tim.ccer.write(|w| w.cc2e().clear_bit()),
+            PwmChannel::Channel3 => self.tim.ccer.write(|w| w.cc3e().clear_bit()),
+        };
+        match channel_engage {
+            PwmChannel::Channel1 => self.tim.ccer.write(|w| w.cc1e().set_bit()),
+            PwmChannel::Channel2 => self.tim.ccer.write(|w| w.cc2e().set_bit()),
+            PwmChannel::Channel3 => self.tim.ccer.write(|w| w.cc3e().set_bit()),
+        };
+        self.tim.cr1.modify(|_,w| w.cen().set_bit());
+    }
+    
+    pub fn channel_down(&self, channel_engage: &PwmChannel, channel_disengage: &PwmChannel) {
+        match channel_disengage {
+            PwmChannel::Channel1 => self.gpio.odr.write(|w| w.odr13().clear_bit()),
+            PwmChannel::Channel2 => self.gpio.odr.write(|w| w.odr14().clear_bit()),
+            PwmChannel::Channel3 => self.gpio.odr.write(|w| w.odr15().clear_bit()),
+        }
+        match channel_engage {
+            PwmChannel::Channel1 => self.gpio.odr.write(|w| w.odr13().set_bit()),
+            PwmChannel::Channel2 => self.gpio.odr.write(|w| w.odr14().set_bit()),
+            PwmChannel::Channel3 => self.gpio.odr.write(|w| w.odr15().set_bit()),
+        }
+    }
+
 }

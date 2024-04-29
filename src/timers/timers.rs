@@ -24,7 +24,6 @@ pub fn configure_tim1(p: &Peripherals) {
     tim.ccmr2_output().write(|w| w.oc3ce().clear_bit().oc3pe().enabled().oc3m().pwm_mode1());
 
     tim.bdtr.write(|w| w.moe().set_bit()); // Enable main output of OC channels
-    // tim.ccer.write(|w| w.cc1e().set_bit()); // enable channel 1
 
     tim.cr1.write(|w| w.arpe().set_bit()); // Enable auto-reload preload registers
     tim.egr.write(|w| w.ug().set_bit()); // Enable event generation
