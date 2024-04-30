@@ -3,15 +3,11 @@ use stm32f0::stm32f0x1::Peripherals;
 /// Configure TIM1 for PWM generation
 pub fn configure_tim1(p: &Peripherals) {
     let tim = &p.TIM1;
-    let gpioa = &p.GPIOA;
     let rcc = &p.RCC;
 
     rcc.apb2enr.write(|w| w.tim1en().set_bit()); // enable clock for TIM1
     rcc.ahbenr.write(|w|w.iopaen().set_bit()); // enable clock for GPIOA
 
-
-    gpioa.moder.write(|w| w.moder8().alternate().moder9().alternate().moder10().alternate());
-    gpioa.afrh.write(|w| w.afrh8().af2().afrh9().af2().afrh10().af2()); // Alternate function of gpioa pins where tim1 is connected
 
     unsafe {
         tim.arr.write(|w| w.bits(800)); 

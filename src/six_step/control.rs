@@ -28,7 +28,7 @@ impl Motor<'_> {
 
     pub fn start(&mut self, forward: bool) {
         hprintln!("Starting motor...").unwrap();
-        const START_UP_TIME: u16 = 500;
+        const START_UP_TIME: u16 = 5000;
         if self.running == 0 {
             self.running = 1;
             let mut delay = 10;
