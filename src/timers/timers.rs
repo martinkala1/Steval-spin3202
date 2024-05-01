@@ -26,19 +26,17 @@ pub fn configure_tim1(p: &Peripherals) {
     tim.cr1.write(|w| w.cen().set_bit()); // enable timer
 }
 
+/// TIM2 serves as counter with 1MHz frequency. Its' value is used to calculate commutation delay
 pub fn configure_tim2(p: &Peripherals) {
     let tim = &p.TIM2;
     let rcc = &p.RCC;
 
     rcc.apb1enr.write(|w| w.tim2en().set_bit()); // enable clock for TIM2
 
-    tim.egr.write(|w| w.ug().set_bit());
     unsafe {
-        tim.psc.write(|w| w.bits(999));
+        tim.psc.write(|w| w.bits(15));
     }
-    tim.arr.write(|w| w.bits(16_000)); // overflow every 0.5 seconds
+    tim.arr.write(|w| w.bits(0xFFFF_FFFF)); // we do not want overflow
 
-    tim.dier.modify(|_,w| w.uie().set_bit());
     tim.cr1.write(|w| w.cen().set_bit()); // enable timer
-    tim.sr.write(|w| w.uif().clear_bit());
 }

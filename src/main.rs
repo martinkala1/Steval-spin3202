@@ -9,7 +9,7 @@ use cortex_m_semihosting::hprintln;
 use panic_halt as _;
 
 use six_step::Motor;
-use stm32f0::stm32f0x1::{self, interrupt, tim1::cnt, ADC, GPIOF, NVIC, TIM2};
+use stm32f0::stm32f0x1::{self, interrupt, ADC, GPIOF, NVIC, TIM2};
 use system_clocks::{configure_sysclk_pll, delay_ms};
 use gpio::configure_gpio;
 use timers::{configure_tim1, configure_tim2, Pwm};
@@ -26,6 +26,7 @@ mod adc;
 static GGPIOF: Mutex<RefCell<Option<GPIOF>>> = Mutex::new(RefCell::new(None));
 static GTIM2: Mutex<RefCell<Option<TIM2>>> = Mutex::new(RefCell::new(None));
 static GADC: Mutex<RefCell<Option<ADC>>> = Mutex::new(RefCell::new(None));
+static LSB: u32 = 800; // 0.8mV
 
 #[entry]
 fn main() -> ! {
@@ -61,8 +62,8 @@ fn main() -> ! {
     hprintln!("Initialization complete!").unwrap();
 
 
-    motor.start(true);
-    motor.stop();
+    // motor.start(true);
+    // motor.stop();
     loop {
         // if adc.isr.read().eoc().is_complete() {
         //     gpiof.odr.modify(|r,w| w.odr0().bit(!r.odr0().bit()));
@@ -73,24 +74,27 @@ fn main() -> ! {
 
 #[interrupt]
 fn ADC_COMP() {
+    static mut CNT: usize = 0;
+    static mut MEASUREMENTS: [u32; 3] = [0, 0, 0];
+    if *CNT > 2 {
+        *CNT = 0;
+    }
     free(|cs| {
         let mut gpio_ref = GGPIOF.borrow(cs).borrow_mut();
         let mut adc_ref = GADC.borrow(cs).borrow_mut();
         if let (Some(ref mut gpio), Some(ref mut adc)) = (gpio_ref.deref_mut(), adc_ref.deref_mut()) {
+            MEASUREMENTS[*CNT] = (adc.dr.read().data().bits() as u32 * LSB) / 1000; // read adc value in mV
             gpio.odr.modify(|r,w| w.odr0().bit(!r.odr0().bit()));
-            adc.isr.modify(|_, w| w.eoseq().clear().eoc().clear());
+            adc.isr.modify(|_, w| w.eoc().clear());
+            delay_ms(300);
         }
     });
+    *CNT += 1;
+    if *CNT > 2 {
+        let three_Vn = MEASUREMENTS[0] + MEASUREMENTS[1] + MEASUREMENTS[2]; 
+        // TODO: Select foating phase from current step, calculate BEMF for floating phase
+        // check with previously calculated BEMF value for this phase for sign change
+        // if sign change occurs, calculate commutation delay from timer 2 value, reset timer 2
+        // execute next step after commutation delay  
+    }
 } 
-
-// #[interrupt]
-// fn TIM2() {
-//     free(|cs| {
-//         let mut gpio_ref = GGPIOF.borrow(cs).borrow_mut();
-//         let mut tim_ref = GTIM2.borrow(cs).borrow_mut();
-//         if let (Some(ref mut gpio), Some(ref mut tim)) = (gpio_ref.deref_mut(), tim_ref.deref_mut()) {
-//             gpio.odr.modify(|r,w| w.odr0().bit(!r.odr0().bit()));
-//             tim.sr.modify(|_,w| w.uif().clear_bit());
-//         }
-//     });
-// }

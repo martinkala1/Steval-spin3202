@@ -17,6 +17,12 @@ pub fn delay_ms(value: u32) {
     delay(value * (( cpu_f/ COMPENSATION) / 1000));
 }
 
+pub fn delay_us(value: u32) {
+    let mut cpu_f = 0;
+    free(|cs| cpu_f = *CPU_FREQ.borrow(cs).borrow());
+    delay(value * (cpu_f/COMPENSATION));
+}
+
 /// Set sysclk to PLL, resulting frequency set at 16MHz
 pub fn __configure_sysclk_pll(p: &Peripherals) -> Result<(), ConfigErrType> {
     let rcc = &p.RCC;
