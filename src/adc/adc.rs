@@ -14,7 +14,7 @@ pub fn configure_adc(p: &Peripherals) {
     while !adc.isr.read().adrdy().is_ready() {}; // wait until ADC ready
 
     adc.chselr.write(|w| w.chsel0().selected().chsel1().selected().chsel2().selected()); // select channels to convert
-    adc.cfgr1.write(|w| w.cont().continuous()); // setup continuous conversion mode
+    adc.cfgr1.write(|w| w.cont().single().exten().rising_edge().extsel().tim3_trgo()); // setup conversion start on tim3 update event
     adc.smpr.write(|w| w.smp().cycles239_5()); // TODO: select sampling time 
     adc.ier.write(|w| w.eocie().enabled()); // enable end of conversion sequence interrupt    
 

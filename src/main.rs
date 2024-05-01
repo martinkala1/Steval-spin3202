@@ -12,7 +12,7 @@ use six_step::Motor;
 use stm32f0::stm32f0x1::{self, interrupt, ADC, GPIOF, NVIC, TIM2};
 use system_clocks::{configure_sysclk_pll, delay_ms};
 use gpio::configure_gpio;
-use timers::{configure_tim1, configure_tim2, Pwm};
+use timers::{configure_tim1, configure_tim2, configure_tim3, Pwm};
 use adc::configure_adc;
 
 mod gpio;
@@ -36,6 +36,8 @@ fn main() -> ! {
     hprintln!("TIM1 ready.").unwrap();
     configure_tim2(&peripherals);
     hprintln!("TIM2 ready.").unwrap();
+    configure_tim3(&peripherals);
+    hprintln!("TIM3 ready.").unwrap();
     configure_gpio(&peripherals);
     hprintln!("GPIO ready.").unwrap();
     configure_adc(&peripherals);
@@ -64,9 +66,9 @@ fn main() -> ! {
     // motor.start(true);
     // motor.stop();
     loop {
-        // if adc.isr.read().eoc().is_complete() {
+        // if peripherals.TIM3.sr.read().uif().bit_is_set() {
+        //     peripherals.TIM3.sr.write(|w| w.uif().clear_bit());
         //     gpiof.odr.modify(|r,w| w.odr0().bit(!r.odr0().bit()));
-        //     delay_ms(500);
         // }
     }
 }
@@ -85,7 +87,6 @@ fn ADC_COMP() {
             MEASUREMENTS[*CNT] = (adc.dr.read().data().bits() as u32 * LSB) / 1000; // read adc value in mV
             gpio.odr.modify(|r,w| w.odr0().bit(!r.odr0().bit()));
             adc.isr.modify(|_, w| w.eoc().clear());
-            delay_ms(300);
         }
     });
     *CNT += 1;
