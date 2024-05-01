@@ -15,7 +15,6 @@ use gpio::configure_gpio;
 use timers::{configure_tim1, configure_tim2, Pwm};
 use adc::configure_adc;
 
-mod error_type;
 mod gpio;
 mod system_clocks;
 mod timers;
