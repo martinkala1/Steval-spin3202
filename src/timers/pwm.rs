@@ -6,12 +6,12 @@ pub enum PwmChannel {
     Channel3,
 }
 
-pub struct Pwm<'a> {
-    pub tim: &'a TIM1,
-    pub gpio: &'a GPIOB,
+pub struct Pwm {
+    pub tim: TIM1,
+    pub gpio: GPIOB,
 }
 
-impl Pwm<'_> {
+impl Pwm {
     pub fn get_duty_cycle(&self, channel: PwmChannel) -> f32 {
         let arr = self.tim.arr.read().bits();
         match channel {
@@ -41,16 +41,6 @@ impl Pwm<'_> {
         self.gpio.odr.modify(|_, w| w.odr13().clear_bit());
         self.gpio.odr.modify(|_, w| w.odr14().clear_bit());
         self.gpio.odr.modify(|_, w| w.odr15().clear_bit());
-    }
-
-    pub fn pwm_start(&self, channel: PwmChannel) {
-        self.tim.cr1.modify(|_,w| w.cen().clear_bit());
-        match channel {
-            PwmChannel::Channel1 => self.tim.ccer.write(|w| w.cc1e().set_bit()),
-            PwmChannel::Channel2 => self.tim.ccer.write(|w| w.cc2e().set_bit()),
-            PwmChannel::Channel3 => self.tim.ccer.write(|w| w.cc3e().set_bit()),
-        };
-        self.tim.cr1.modify(|_,w| w.cen().set_bit());
     }
 
     pub fn pwm_stop(&self, channel: PwmChannel) {

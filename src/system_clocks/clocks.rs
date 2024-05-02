@@ -5,14 +5,15 @@ static CPU_FREQ: u32 = 16_000_000;
 
 const CLK_CONFIG_TIMEOUT: u32 = 4_000;
 
-const COMPENSATION: u32 = 2; // IMHO, delay() fn takes 2 ICs per cycle waited
+const CPU_CYCLES_PER_MS: u32 = 8000; // IMHO, delay() fn takes 2 ICs per cycle waited
+const CPU_CYCLES_PER_US: u32 = 8;
 
 pub fn delay_ms(value: u32) {
-    delay(value * (( CPU_FREQ / COMPENSATION) / 1000));
+    delay(value * CPU_CYCLES_PER_MS);
 }
 
 pub fn delay_us(value: u32) {
-    delay(value * (CPU_FREQ / COMPENSATION));
+    delay(value * CPU_CYCLES_PER_US);
 }
 
 /// Set sysclk to PLL, resulting frequency set at 16MHz

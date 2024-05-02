@@ -24,6 +24,7 @@ pub fn configure_gpioa(p: &Peripherals) {
 
     rcc.ahbenr.modify(|_,w| w.iopaen().set_bit()); // enable clock for GPIOA
 
-    gpioa.moder.write(|w| w.moder8().alternate().moder9().alternate().moder10().alternate().moder0().analog().moder1().analog().moder2().analog());
+    gpioa.moder.write(|w| w.moder8().alternate().moder9().alternate().moder10().alternate().moder0().analog().moder1().analog().moder2().analog().moder7().output());
     gpioa.afrh.write(|w| w.afrh8().af2().afrh9().af2().afrh10().af2()); // Alternate function of gpioa pins where tim1 is connected
+    gpioa.odr.modify(|_, w| w.odr7().clear_bit()); // gpio_bemf pin to 0, effectively enabling voltage divider for ADC input
 }

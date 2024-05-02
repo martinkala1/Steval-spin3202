@@ -13,11 +13,12 @@ pub fn configure_adc(p: &Peripherals) {
     adc.cr.modify(|_,w| w.aden().set_bit()); // enable ADC
     while !adc.isr.read().adrdy().is_ready() {}; // wait until ADC ready
 
-    adc.chselr.write(|w| w.chsel0().selected().chsel1().selected().chsel2().selected()); // select channels to convert
-    adc.cfgr1.write(|w| w.cont().single().exten().rising_edge().extsel().tim3_trgo()); // setup conversion start on tim3 update event
-    adc.smpr.write(|w| w.smp().cycles239_5()); // TODO: select sampling time 
-    adc.ier.write(|w| w.eocie().enabled()); // enable end of conversion sequence interrupt    
+    adc.chselr.write(|w| w.chsel2().selected()); // select channels to convert
+    adc.cfgr1.write(|w| w.cont().single().exten().rising_edge().extsel().tim1_trgo()); // setup conversion start on tim3 update event
+    adc.smpr.write(|w| w.smp().cycles13_5()); // TODO: Figure out sampling time for ADC
+    adc.ier.write(|w| w.eocie().enabled());    
 
     adc.cr.modify(|_,w| w.adstart().start_conversion()); // start conversion
     adc.isr.write(|w| w.eoc().clear().eoseq().clear());
+
 }

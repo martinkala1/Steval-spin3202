@@ -19,7 +19,7 @@ pub static STEP2: Step = Step {
     channel_float: PwmChannel::Channel2
 };
 
-pub static STEP3: Step= Step {
+pub static STEP3: Step = Step {
     channel_up: PwmChannel::Channel2,
     channel_down: PwmChannel::Channel3,
     channel_float: PwmChannel::Channel1
