@@ -43,16 +43,6 @@ impl Pwm {
         self.gpio.odr.modify(|_, w| w.odr15().clear_bit());
     }
 
-    pub fn pwm_stop(&self, channel: PwmChannel) {
-        self.tim.cr1.modify(|_,w| w.cen().clear_bit());
-        match channel {
-            PwmChannel::Channel1 => self.tim.ccer.write(|w| w.cc1e().clear_bit()),
-            PwmChannel::Channel2 => self.tim.ccer.write(|w| w.cc2e().clear_bit()),
-            PwmChannel::Channel3 => self.tim.ccer.write(|w| w.cc3e().clear_bit()),
-        };
-        self.tim.cr1.modify(|_,w| w.cen().set_bit());
-    }
-    
     pub fn channel_up(&self, channel_engage: &PwmChannel, channel_disengage: &PwmChannel) {
         self.tim.cr1.modify(|_,w| w.cen().clear_bit());
         match channel_disengage {

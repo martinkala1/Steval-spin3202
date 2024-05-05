@@ -5,8 +5,8 @@ pub fn configure_gpiof(p: &Peripherals) {
     let gpiof = &p.GPIOF;
 
     rcc.ahbenr.modify(|_, w| w.iopfen().set_bit());
-    gpiof.moder.write(|w| w.moder0().output().moder1().input().moder6().output()); // todo: overcurrent protection
-    gpiof.odr.write(|w| w.odr6().set_bit()); // PF6 set to one to increase overcurrent threshold
+    gpiof.moder.write(|w| w.moder0().output().moder1().input().moder6().output().moder7().output());
+    gpiof.odr.write(|w| w.odr6().clear_bit().odr7().set_bit()); // PF6 set to one to increase overcurrent threshold
     gpiof.odr.modify(|_, w| w.odr0().set_bit()); // turn LED off
 }
 

@@ -16,12 +16,14 @@ use system_clocks::{configure_sysclk_pll, delay_ms, delay_us};
 use gpio::configure_gpio;
 use timers::{configure_tim1, Pwm};
 use adc::configure_adc;
+use usart::configure_usart;
 
 mod gpio;
 mod system_clocks;
 mod timers;
 mod six_step;
 mod adc;
+mod usart;
 
 // static GGPIOF: Mutex<RefCell<Option<GPIOF>>> = Mutex::new(RefCell::new(None));
 static GTIM2: Mutex<RefCell<Option<TIM2>>> = Mutex::new(RefCell::new(None));
@@ -74,7 +76,6 @@ fn reconfigure_adc_channel(adc: &mut ADC, current_step: usize) {
 }
 
 static V_BUS_HALF: i32 = 1800;
-static CORRECTION: i32 = 170; // correction for imperfections, when motor is idle, measured floating voltage should be around V_BUS_HALF    
 
 ///called every 50us
 #[interrupt]
@@ -114,9 +115,10 @@ fn ADC_COMP() {
         }
         2 => {
             if *CALL_CNT > 4 {
-                let curr_bemf = ((adc.dr.read().data().bits() * 8) / 10) as i32 - V_BUS_HALF - CORRECTION;
+                let curr_bemf = ((adc.dr.read().data().bits() * 8) / 10) as i32 - V_BUS_HALF;
                 if (*PREV_BEMF) * curr_bemf < 0 {
                     // zero-crossing event found
+                    motor.set_speed(50);
                     *COMM_DELAY = *CALL_CNT;
                     *PREV_BEMF = 0;
                     *CALL_CNT = 0;
@@ -155,11 +157,11 @@ fn ADC_COMP() {
             *STATE = 13;
         }
         13 => {
-            if *TIMER > 80_000 {
+            if *TIMER > 50_000 {
                 *STATE = 100;
             }
             if *CALL_CNT > 4 {
-                let curr_bemf = ((adc.dr.read().data().bits() * 8) / 10) as i32 - V_BUS_HALF - CORRECTION;
+                let curr_bemf = ((adc.dr.read().data().bits() * 8) / 10) as i32 - V_BUS_HALF;
                 if (*PREV_BEMF) * curr_bemf < 0 {
                     // zero-crossing event found
                     *COMM_DELAY = *CALL_CNT;
