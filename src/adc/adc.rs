@@ -9,6 +9,9 @@ pub fn configure_adc(p: &Peripherals) {
     rcc.apb2enr.modify(|_, w| w.adcen().set_bit()); // enable ADC clock
     adc.cfgr2.write(|w| w.ckmode().adcclk());
 
+    adc.cr.modify(|_, w| w.adcal().start_calibration());
+    while adc.cr.read().adcal().is_calibrating() {};
+
     adc.isr.write(|w| w.adrdy().clear());
     adc.cr.modify(|_,w| w.aden().set_bit()); // enable ADC
     while !adc.isr.read().adrdy().is_ready() {}; // wait until ADC ready

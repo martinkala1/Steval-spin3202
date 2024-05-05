@@ -34,7 +34,7 @@ impl Pwm {
     }
 
     pub fn stop(&self) {
-        self.tim.cr1.modify(|_,w| w.cen().clear_bit());
+        // self.tim.cr1.modify(|_,w| w.cen().clear_bit());
         self.tim.ccer.modify(|_, w| w.cc1e().clear_bit());
         self.tim.ccer.modify(|_, w| w.cc2e().clear_bit());
         self.tim.ccer.modify(|_, w| w.cc3e().clear_bit());
