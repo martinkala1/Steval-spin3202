@@ -1,20 +1,16 @@
 #![no_std]
 #![no_main]
 
-use core::{borrow::BorrowMut, ops::DerefMut};
 use core::cell::RefCell;
 // use rclite::Rc;
 
 use cortex_m::interrupt::{free, Mutex};
-use cortex_m::peripheral;
 use cortex_m_rt::entry;
-use cortex_m_semihosting::hprintln;
 use panic_halt as _;
 
 use six_step::Motor;
-use stm32f0::stm32f0x1::{gpiob, CorePeripherals};
-use stm32f0::stm32f0x1::{self, interrupt, tim1::CNT, ADC, GPIOF, NVIC, TIM2};
-use system_clocks::{configure_sysclk_pll, delay_ms, delay_us};
+use stm32f0::stm32f0x1::{self, interrupt, ADC, GPIOF, NVIC, TIM2};
+use system_clocks::{configure_sysclk_pll, delay_ms};
 use gpio::configure_gpio;
 use timers::{configure_tim1, Pwm};
 use adc::configure_adc;
@@ -36,20 +32,13 @@ static GMOTOR: Mutex<RefCell<Option<Motor>>> = Mutex::new(RefCell::new(None));
 fn main() -> ! {
     let peripherals = stm32f0x1::Peripherals::take().unwrap();
     configure_sysclk_pll(&peripherals);
-    hprintln!("Clock ready.").unwrap();
     configure_tim1(&peripherals);
-    hprintln!("TIM1 ready.").unwrap();
-    // configure_tim2(&peripherals);
-    // hprintln!("TIM2 ready.").unwrap();
     configure_gpio(&peripherals);
-    hprintln!("GPIO ready.").unwrap();
     configure_adc(&peripherals);
-    hprintln!("ADC ready.").unwrap();
     configure_usart(&peripherals);
-    hprintln!("USART ready.").unwrap();
 
     let gpiof = peripherals.GPIOF;
-    let usart = peripherals.USART1;
+    let usart = peripherals.USART2;
     let tim2 = peripherals.TIM2;
     let adc = peripherals.ADC;
     let pwm = Pwm{tim: peripherals.TIM1, gpio: peripherals.GPIOB};
@@ -63,13 +52,11 @@ fn main() -> ! {
     unsafe {
         NVIC::unmask(interrupt::ADC_COMP);
     }
-    hprintln!("Initialization complete!").unwrap();
     let mut received_char: u8;
     loop {
-        // if usart.isr.read().rxne().bit_is_set() {
-        //     received_char = usart.rdr.read().rdr().bits() as u8;
-        //     hprintln!("Received char: {}", received_char as char).unwrap();
-        // }
+        if usart.isr.read().rxne().bit_is_set() {
+            received_char = usart.rdr.read().rdr().bits() as u8;
+        }
         // gpiof.odr.modify(|r,w| w.odr0().bit(!r.odr0().bit()));
         // delay_us(1_000_000);
     }
@@ -115,27 +102,28 @@ fn ADC_COMP() {
     });
     match STATE {
         0 => {
-            if gpiof.idr.read().idr1().bit_is_clear() {
+            if gpiof.idr.read().idr1().bit_is_clear() { // start if button is pressed
                 *STATE = 102;
+                motor.set_speed(50);
                 *TIMER = 0;
                 *COMM_DELAY = 0;
                 *PREV_BEMF = 0;
                 *DELAY = 40;
                 *CALL_CNT = 0;
             }
-            if (*CALL_CNT > 1_000_000) {
+            if *CALL_CNT > 1_000_000 { // avoid overflow
                 *CALL_CNT = 0;
             }
         }
         102 => {
-            if *CALL_CNT > 1_000 {
+            if *CALL_CNT > 1_000 { // button debouncing delay
                 motor.engage_step();
                 *CALL_CNT = 0;
                 *STATE = 1;
             }
         }
         1 => {
-            if *CALL_CNT >= *DELAY{
+            if *CALL_CNT >= *DELAY{ // slowly decrease the delay
                 motor.next_step(true);
                 *CALL_CNT = 0;
                 *DELAY = *DELAY - 1;
@@ -147,8 +135,7 @@ fn ADC_COMP() {
         2 => {
             if *CALL_CNT > 4 {
                 let curr_bemf = ((adc.dr.read().data().bits() * 8) / 10) as i32 - V_BUS_HALF;
-                if (*PREV_BEMF) * curr_bemf < 0 {
-                    // zero-crossing event found
+                if (*PREV_BEMF) * curr_bemf < 0 { // zero crossing event detection
                     *COMM_DELAY = *CALL_CNT;
                     *PREV_BEMF = 0;
                     *CALL_CNT = 0;
@@ -157,7 +144,7 @@ fn ADC_COMP() {
                 }
                 *PREV_BEMF = curr_bemf;
             }
-            if *CALL_CNT >= *DELAY {
+            if *CALL_CNT >= *DELAY { // next step without feedback
                 motor.next_step(true);
                 *STATE = 3;
                 *TIMER += *CALL_CNT;
@@ -168,11 +155,11 @@ fn ADC_COMP() {
             }
         }
         3 => {
-            reconfigure_adc_channel(adc, motor.actual_step_index);
+            reconfigure_adc_channel(adc, motor.actual_step_index); // to measure floating phase
             *STATE = 2;
         }
         10 => {
-            if *CALL_CNT >= *COMM_DELAY {
+            if *CALL_CNT >= *COMM_DELAY { // commutation delay state
                 *TIMER += *CALL_CNT;
                 *CALL_CNT = 0;
                 *STATE = 11;
@@ -213,7 +200,7 @@ fn ADC_COMP() {
             *STATE = 101;
         }
         101 => {
-            if *CALL_CNT >= 10_000 {
+            if *CALL_CNT >= 10_000 { // button debouncing, go to starting state
                 *CALL_CNT = 0;
                 *STATE = 0;
             }

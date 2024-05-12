@@ -12,10 +12,6 @@ pub fn delay_ms(value: u32) {
     delay(value * CPU_CYCLES_PER_MS);
 }
 
-pub fn delay_us(value: u32) {
-    delay(value * CPU_CYCLES_PER_US);
-}
-
 /// Set sysclk to PLL, resulting frequency set at 16MHz
 pub fn __configure_sysclk_pll(p: &Peripherals) -> Result<(), ()> {
     let rcc = &p.RCC;

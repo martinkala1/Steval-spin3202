@@ -12,15 +12,6 @@ pub struct Pwm {
 }
 
 impl Pwm {
-    pub fn get_duty_cycle(&self, channel: PwmChannel) -> f32 {
-        let arr = self.tim.arr.read().bits();
-        match channel {
-            PwmChannel::Channel1 => return self.tim.ccr1().read().bits() as f32/arr as f32,
-            PwmChannel::Channel2 => return self.tim.ccr2().read().bits() as f32/arr as f32,
-            PwmChannel::Channel3 => return self.tim.ccr3().read().bits() as f32/arr as f32,
-        };
-    }
-
     pub fn set_ccr(&mut self, mut ccr_val: u32) {
         let arr_val = self.tim.arr.read().bits() as u32;
         if ccr_val > arr_val {

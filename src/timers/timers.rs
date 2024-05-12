@@ -25,19 +25,3 @@ pub fn configure_tim1(p: &Peripherals) {
     tim.cr1.write(|w| w.arpe().set_bit()); // Enable auto-reload preload registers
     tim.cr1.write(|w| w.cen().set_bit()); // enable timer
 }
-
-// pub fn configure_tim2(p: &Peripherals) {
-//     let tim = &p.TIM2;
-//     let rcc = &p.RCC;
-
-//     rcc.apb1enr.modify(|_, w| w.tim2en().set_bit()); // enable clock for TIM2
-//     tim.cr1.modify(|_, w| w.opm().enabled());
-//     tim.dier.write(|w| w.uie().enabled());
-
-//     unsafe {
-//         tim.psc.write(|w| w.bits(800)); // every tick is 50us
-//     }
-//     tim.arr.write(|w| w.bits(0)); // we do not want overflow
-
-//     // tim.cr1.write(|w| w.cen().set_bit()); // enable timer
-// }

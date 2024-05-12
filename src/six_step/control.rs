@@ -1,9 +1,4 @@
-use cortex_m_semihosting::hprintln;
-use stm32f0::stm32f0x1::adc::tr;
-use stm32f0::stm32f0x1::{Peripherals, TIM3};
-
-use crate::system_clocks::delay_us;
-use crate::{system_clocks::delay_ms, timers::Pwm};
+use crate::timers::Pwm;
 use crate::six_step::step_sequence::STEP_COUNT;
 
 use super::step_sequence::{Step, STEP_SEQUENCE};
