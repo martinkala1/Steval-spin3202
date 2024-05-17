@@ -1,7 +1,7 @@
 use cortex_m::asm::delay;
 use stm32f0::stm32f0x1::Peripherals;
 
-static CPU_FREQ: u32 = 16_000_000;
+pub static CPU_FREQ: u32 = 16_000_000;
 
 const CLK_CONFIG_TIMEOUT: u32 = 4_000;
 

@@ -2,31 +2,31 @@
 #![no_main]
 
 use core::cell::RefCell;
-// use rclite::Rc;
 
 use cortex_m::interrupt::{free, Mutex};
 use cortex_m_rt::entry;
 use panic_halt as _;
 
 use six_step::Motor;
-use stm32f0::stm32f0x1::{self, interrupt, ADC, GPIOF, NVIC, TIM2};
-use system_clocks::{configure_sysclk_pll, delay_ms};
+use stm32f0::stm32f0x1::{self, interrupt, ADC, GPIOF, NVIC, TIM2, USART1};
+use system_clocks::configure_sysclk_pll;
 use gpio::configure_gpio;
 use timers::{configure_tim1, Pwm};
 use adc::configure_adc;
-use usart::configure_usart;
+use uart::{configure_uart, uart_read, uart_read_async, uart_send};
 
 mod gpio;
 mod system_clocks;
 mod timers;
 mod six_step;
 mod adc;
-mod usart;
+mod uart;
 
 static GGPIOF: Mutex<RefCell<Option<GPIOF>>> = Mutex::new(RefCell::new(None));
 static GTIM2: Mutex<RefCell<Option<TIM2>>> = Mutex::new(RefCell::new(None));
 static GADC: Mutex<RefCell<Option<ADC>>> = Mutex::new(RefCell::new(None));
 static GMOTOR: Mutex<RefCell<Option<Motor>>> = Mutex::new(RefCell::new(None));
+static GUART: Mutex<RefCell<Option<USART1>>> = Mutex::new(RefCell::new(None));
 
 #[entry]
 fn main() -> ! {
@@ -35,31 +35,27 @@ fn main() -> ! {
     configure_tim1(&peripherals);
     configure_gpio(&peripherals);
     configure_adc(&peripherals);
-    configure_usart(&peripherals);
+    configure_uart(&peripherals);
 
     let gpiof = peripherals.GPIOF;
-    let usart = peripherals.USART2;
+    let uart = peripherals.USART1;
     let tim2 = peripherals.TIM2;
     let adc = peripherals.ADC;
     let pwm = Pwm{tim: peripherals.TIM1, gpio: peripherals.GPIOB};
     let motor = Motor::new(pwm);
+    uart_send(&uart, "Configuration completed.\n\r");
     free(|cs| {
         GGPIOF.borrow(cs).replace(Some(gpiof));
         GTIM2.borrow(cs).replace(Some(tim2));
         GADC.borrow(cs).replace(Some(adc));
-        GMOTOR.borrow(cs).replace(Some(motor))
+        GMOTOR.borrow(cs).replace(Some(motor));
+        GUART.borrow(cs).replace(Some(uart));
     });
     unsafe {
         NVIC::unmask(interrupt::ADC_COMP);
     }
-    let mut received_char: u8;
-    loop {
-        if usart.isr.read().rxne().bit_is_set() {
-            received_char = usart.rdr.read().rdr().bits() as u8;
-        }
-        // gpiof.odr.modify(|r,w| w.odr0().bit(!r.odr0().bit()));
-        // delay_us(1_000_000);
-    }
+
+    loop {}
 }
 
 fn reconfigure_adc_channel(adc: &mut ADC, current_step: usize) {
@@ -83,8 +79,11 @@ fn ADC_COMP() {
     static mut ADC_WRAPPER: Option<ADC> = None;
     static mut MOTOR_WRAPPER: Option<Motor> = None;
     static mut GPIOF_WRAPPER: Option<GPIOF> = None;
+    static mut UART_WRAPPER: Option<USART1> = None;
     static mut PREV_BEMF: i32 = 0;
     static mut DELAY: u32 = 40;
+    static mut SPEED: u32 = 50;
+    static mut SPEED_CHANGED: bool = false;
     let gpiof = GPIOF_WRAPPER.get_or_insert_with(|| {
         free(|cs|{
             GGPIOF.borrow(cs).replace(None).unwrap()
@@ -95,6 +94,11 @@ fn ADC_COMP() {
             GADC.borrow(cs).replace(None).unwrap()
         })
     });
+    let uart1 = UART_WRAPPER.get_or_insert_with(|| {
+        free(|cs|{
+            GUART.borrow(cs).replace(None).unwrap()
+        })
+    });
     let motor = MOTOR_WRAPPER.get_or_insert_with(|| {
         free(|cs|{
             GMOTOR.borrow(cs).replace(None).unwrap()
@@ -102,6 +106,17 @@ fn ADC_COMP() {
     });
     match STATE {
         0 => {
+            if uart1.isr.read().rxne().bit_is_set() { // start if 'g' is received
+                if uart_read(uart1) == 'g' {
+                    *STATE = 102;
+                    motor.set_speed(50);
+                    *TIMER = 0;
+                    *COMM_DELAY = 0;
+                    *PREV_BEMF = 0;
+                    *DELAY = 40;
+                    *CALL_CNT = 0;
+                }
+            }
             if gpiof.idr.read().idr1().bit_is_clear() { // start if button is pressed
                 *STATE = 102;
                 motor.set_speed(50);
@@ -159,6 +174,28 @@ fn ADC_COMP() {
             *STATE = 2;
         }
         10 => {
+            if *SPEED_CHANGED == true {
+                *SPEED_CHANGED = false;
+                motor.set_speed(*SPEED);
+            }
+            match uart_read_async(uart1) {
+                'h' => {
+                    if *TIMER > 20_000 { *STATE = 100;}
+                }
+                'f' => {
+                    if *SPEED < 130 {
+                        *SPEED += 10;
+                        *SPEED_CHANGED = true;
+                    }
+                }
+                's' => {
+                    if *SPEED > 30 {
+                        *SPEED -= 10;
+                        *SPEED_CHANGED = true;
+                    }
+                }
+                _ => {}
+            }
             if *CALL_CNT >= *COMM_DELAY { // commutation delay state
                 *TIMER += *CALL_CNT;
                 *CALL_CNT = 0;
@@ -166,7 +203,7 @@ fn ADC_COMP() {
             }    
         }
         11 => {
-            if *TIMER > 20_000 && gpiof.idr.read().idr1().bit_is_clear() { // stop motor when button is pressed
+            if *TIMER > 20_000 && (gpiof.idr.read().idr1().bit_is_clear() || uart_read_async(uart1) == 'h'){ // stop motor when button is pressed
                 *STATE = 100;
             } else {
                 motor.next_step(true);

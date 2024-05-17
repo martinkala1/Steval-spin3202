@@ -15,7 +15,8 @@ pub fn configure_gpiob(p: &Peripherals) {
     let gpiob = &p.GPIOB;
 
     rcc.ahbenr.modify(|_, w| w.iopben().set_bit());
-    gpiob.moder.modify(|_, w| w.moder13().output().moder14().output().moder15().output());
+    gpiob.moder.modify(|_, w| w.moder13().output().moder14().output().moder15().output().moder6().alternate().moder7().alternate());
+    gpiob.afrl.write(|w| w.afrl6().af0().afrl7().af0());
 }
 
 pub fn configure_gpioa(p: &Peripherals) {

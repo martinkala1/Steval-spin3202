@@ -1,5 +1,5 @@
 mod clocks;
-pub use clocks::delay_ms;
+pub use clocks::{delay_ms, CPU_FREQ};
 use clocks::__configure_sysclk_pll;
 
 use stm32f0::stm32f0x1::Peripherals;
